@@ -1,0 +1,9 @@
+{
+  "name": "wobble-web",
+  "version": "0.1.0",
+  "description": "Wobble web dashboard (MVP2)",
+  "scripts": {
+    "dev": "echo 'Web scaffold only — not yet implemented'",
+    "build": "echo 'Web scaffold only — not yet implemented'"
+  }
+}
