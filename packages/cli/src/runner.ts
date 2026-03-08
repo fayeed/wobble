@@ -191,7 +191,13 @@ function estimateTotalCost(tests: TestDefinition[], config: WobbleConfig): numbe
     } catch { /* ignore */ }
 
     for (const c of test.cases) {
-      const inputTokens = estimateTokens(c.input ?? "");
+      let inputTokens: number;
+      if (c.turns && c.turns.length > 0) {
+        // Sum all turn content; multi-turn history accumulates in the context window
+        inputTokens = c.turns.reduce((sum, t) => sum + estimateTokens(t.content), 0);
+      } else {
+        inputTokens = estimateTokens(c.input ?? "");
+      }
       total += estimateRunCost({ model, systemTokens, inputTokens, maxOutputTokens, runs });
     }
   }

@@ -34,9 +34,16 @@ export function estimateCostForTokens(
   return (inputTokens / 1_000_000) * p.input + (outputTokens / 1_000_000) * p.output;
 }
 
-/** Rough estimate: ~4 chars per token */
+/**
+ * Estimate token count from text.
+ * Uses a word-based heuristic (~1.35 tokens/word) combined with a char-based
+ * floor (~4 chars/token) and takes the larger, which better handles code,
+ * JSON, and punctuation-heavy content that tokenizes more densely than prose.
+ */
 export function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
+  const byChars = Math.ceil(text.length / 4);
+  const byWords = Math.ceil(text.trim().split(/\s+/).filter(Boolean).length * 1.35);
+  return Math.max(byChars, byWords);
 }
 
 export function estimateRunCost(opts: {
