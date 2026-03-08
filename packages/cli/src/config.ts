@@ -45,6 +45,7 @@ const TestCaseSchema = z
     input: z.string().optional(),
     turns: z.array(MessageSchema).optional(),
     expect: z.array(ExpectationSchema),
+    variables: z.record(z.string()).optional(),
     model: z.string().optional(),
     provider: ProviderSchema.optional(),
   })
@@ -137,6 +138,22 @@ export function loadPrompt(promptFile: string): string {
     throw new Error(`Prompt file not found: ${promptFile}`);
   }
   return fs.readFileSync(promptFile, "utf-8").trim();
+}
+
+/**
+ * Replace {{variable_name}} placeholders in a string.
+ * Unknown placeholders are left as-is so errors surface clearly in the output.
+ * Warns (to stderr) about placeholders that have no matching variable.
+ */
+export function interpolate(template: string, variables: Record<string, string>): string {
+  return template.replace(/\{\{([^}]+)\}\}/g, (match, key: string) => {
+    const trimmed = key.trim();
+    if (Object.prototype.hasOwnProperty.call(variables, trimmed)) {
+      return variables[trimmed];
+    }
+    // Leave unknown placeholders intact so the user sees them in the output
+    return match;
+  });
 }
 
 export function resolveTestModel(

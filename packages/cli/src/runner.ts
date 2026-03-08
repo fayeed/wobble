@@ -7,7 +7,7 @@ import type {
   EvalResult,
   TokenUsage,
 } from "./types.js";
-import { loadPrompt, resolveTestModel, resolveTestProvider, resolveTestRuns, resolveTestThreshold, resolveTestConcurrency } from "./config.js";
+import { loadPrompt, interpolate, resolveTestModel, resolveTestProvider, resolveTestRuns, resolveTestThreshold, resolveTestConcurrency } from "./config.js";
 import { getProvider, buildMessages } from "./providers/index.js";
 import { runEvaluator } from "./evaluators/index.js";
 import { estimateCostForTokens, estimateTokens, estimateRunCost } from "./cost.js";
@@ -93,15 +93,20 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
       const caseProviderName = testCase.provider ?? providerName;
       const caseProvider = await getProvider(caseProviderName);
 
+      const vars = testCase.variables ?? {};
+      const interpolatedPrompt = interpolate(promptContent, vars);
+      const interpolatedInput = testCase.input !== undefined ? interpolate(testCase.input, vars) : undefined;
+      const interpolatedTurns = testCase.turns?.map((t) => ({ ...t, content: interpolate(t.content, vars) }));
+
       const { system, messages } = buildMessages(
-        promptContent,
-        testCase.input,
-        testCase.turns
+        interpolatedPrompt,
+        interpolatedInput,
+        interpolatedTurns
       );
 
       const inputLabel =
-        testCase.input ??
-        testCase.turns?.filter((m) => m.role === "user").pop()?.content ??
+        interpolatedInput ??
+        interpolatedTurns?.filter((m) => m.role === "user").pop()?.content ??
         "(multi-turn)";
 
       // passCounts[evalIdx] = number of runs that passed

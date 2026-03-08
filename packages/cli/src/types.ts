@@ -46,6 +46,8 @@ export interface TestCase {
   // Multi-turn conversation
   turns?: Message[];
   expect: Expectation[];
+  // Variable values interpolated into {{name}} placeholders in the prompt and input
+  variables?: Record<string, string>;
   // Per-case overrides
   model?: string;
   provider?: ProviderName;
