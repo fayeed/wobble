@@ -7,11 +7,14 @@ Reply with ONLY valid JSON: {"pass": true, "reason": "one sentence"}.`;
 export async function evalLlmJudge(
   output: string,
   criteria: string,
-  model = "gpt-4o-mini",
-  providerName = "openai"
+  model: string | undefined,
+  providerName: string | undefined
 ): Promise<EvalResult> {
+  const resolvedModel = model ?? "gpt-4o-mini";
+  const resolvedProvider = providerName ?? "openai";
+
   try {
-    const provider = await getProvider(providerName);
+    const provider = await getProvider(resolvedProvider);
 
     const response = await provider.run({
       system: SYSTEM,
@@ -21,7 +24,7 @@ export async function evalLlmJudge(
           content: `Criteria: ${criteria}\n\nResponse to evaluate:\n${output}\n\nReply with JSON only.`,
         },
       ],
-      model,
+      model: resolvedModel,
       maxTokens: 256,
     });
 

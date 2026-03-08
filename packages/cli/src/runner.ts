@@ -132,7 +132,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
         }
 
         const evals = await Promise.all(
-          testCase.expect.map((exp) => runEvaluator(exp, output, inputLabel))
+          testCase.expect.map((exp) => runEvaluator(exp, output, inputLabel, { model: caseModel, provider: caseProviderName }))
         );
 
         if (run === runs - 1) lastEvals = evals;

@@ -10,7 +10,8 @@ import { evalCustom } from "./custom.js";
 export async function runEvaluator(
   expectation: Expectation,
   output: string,
-  input: string
+  input: string,
+  defaults?: { model: string; provider: string }
 ): Promise<EvalResult> {
   switch (expectation.type) {
     case "contains":
@@ -27,8 +28,8 @@ export async function runEvaluator(
       return evalLlmJudge(
         output,
         expectation.criteria!,
-        expectation.model,
-        expectation.provider
+        expectation.model ?? defaults?.model,
+        expectation.provider ?? defaults?.provider
       );
     case "custom":
       return evalCustom(output, input, expectation.evaluator!);
