@@ -26,7 +26,7 @@ export async function loadCustomProvider(providerPath: string): Promise<Provider
   if (!provider || typeof (provider as Record<string, unknown>)["run"] !== "function") {
     throw new Error(
       `Custom provider at "${providerPath}" must export a default object (or named "provider") with a run() method.\n` +
-        `Expected: export default { async run({ system, messages, model, maxTokens }) { ... } }`
+        `Expected: export default { async run({ system, messages, model, maxTokens, timeoutMs }) { ... } }`
     );
   }
 
