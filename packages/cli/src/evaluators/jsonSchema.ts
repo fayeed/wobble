@@ -1,5 +1,25 @@
 import type { EvalResult } from "../types.js";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let ajv: any | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const compiledValidators = new Map<string, any>();
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getValidator(schema: Record<string, unknown>): Promise<any> {
+  if (!ajv) {
+    const mod = await import("ajv");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const AjvClass = (mod as any).default?.default ?? (mod as any).default ?? mod;
+    ajv = new AjvClass({ allErrors: true });
+  }
+  const key = JSON.stringify(schema);
+  if (!compiledValidators.has(key)) {
+    compiledValidators.set(key, ajv.compile(schema));
+  }
+  return compiledValidators.get(key);
+}
+
 function extractJson(output: string): unknown {
   // First try raw parse
   try {
@@ -23,13 +43,7 @@ export async function evalJsonSchema(
     return { type: "json_schema", passed: false, detail: "Output is not valid JSON" };
   }
 
-  // Dynamic import handles ESM/CJS interop for AJV
-  const mod = await import("ajv");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const AjvClass = (mod as any).default?.default ?? (mod as any).default ?? mod;
-  const ajv = new AjvClass({ allErrors: true });
-
-  const validate = ajv.compile(schema);
+  const validate = await getValidator(schema);
   const valid = validate(parsed);
 
   if (!valid) {
