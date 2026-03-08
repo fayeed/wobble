@@ -1,8 +1,8 @@
 import { defineCommand } from "citty";
 import { loadConfig } from "./config.js";
 import { runTests } from "./runner.js";
-import { writeBaseline, loadBaseline, findRegressions } from "./baseline.js";
-import { printRegressions, printBaselineWritten } from "./output/terminal.js";
+import { writeBaseline, loadBaseline, compareBaseline } from "./baseline.js";
+import { printBaselineComparison, printBaselineWritten } from "./output/terminal.js";
 import { buildJUnit } from "./output/junit.js";
 
 export const runCommand = defineCommand({
@@ -37,7 +37,7 @@ export const runCommand = defineCommand({
     baseline: {
       type: "string",
       description: "Path to baseline file",
-      default: ".wobble-baseline.json",
+      default: ".wobble/baseline.json",
     },
     output: {
       type: "string",
@@ -71,13 +71,15 @@ export const runCommand = defineCommand({
 
       if (args["write-baseline"]) {
         writeBaseline(result.results, baselinePath);
-        if (!jsonMode) printBaselineWritten(baselinePath);
-        process.exit(result.hasFailures ? 1 : 0);
+        if (!jsonMode && !junitMode) printBaselineWritten(baselinePath);
+        // Always exit 0 after writing — the point is to record current state
+        process.exit(0);
       }
 
-      const regressions = existingBaseline
-        ? findRegressions(existingBaseline, result.results)
-        : [];
+      const comparison = existingBaseline
+        ? compareBaseline(existingBaseline, result.results)
+        : null;
+      const regressions = comparison?.regressions ?? [];
 
       if (jsonMode) {
         process.stdout.write(JSON.stringify({
@@ -86,6 +88,9 @@ export const runCommand = defineCommand({
           totalCost: result.totalCost,
           hasFailures: result.hasFailures,
           regressions,
+          improvements: comparison?.improvements ?? [],
+          newChecks: comparison?.newChecks ?? [],
+          removedChecks: comparison?.removedChecks ?? [],
           results: result.results,
         }, null, 2) + "\n");
         process.exit(result.hasFailures || regressions.length > 0 ? 1 : 0);
@@ -102,8 +107,8 @@ export const runCommand = defineCommand({
         process.exit(result.hasFailures || regressions.length > 0 ? 1 : 0);
       }
 
-      if (existingBaseline) {
-        printRegressions(regressions);
+      if (comparison) {
+        printBaselineComparison(comparison);
         process.exit(result.hasFailures || regressions.length > 0 ? 1 : 0);
       }
 

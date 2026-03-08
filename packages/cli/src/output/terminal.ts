@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import type { EvalResult } from "../types.js";
+import type { BaselineComparison } from "../baseline.js";
 
 export function printTestHeader(id: string): void {
   console.log("\n" + chalk.bold(id));
@@ -66,14 +67,40 @@ export function printRunError(testId: string, message: string): void {
   console.log(chalk.red(`  Error: ${message}`));
 }
 
-export function printRegressions(regressions: Array<{ testId: string; input: string; evalType: string }>): void {
-  if (regressions.length === 0) return;
-  console.log(chalk.red.bold(`\n${regressions.length} regression${regressions.length === 1 ? "" : "s"} vs baseline:`));
-  for (const r of regressions) {
-    console.log(chalk.red(`  ✗ ${r.testId}  ${chalk.dim(`"${r.input.length > 55 ? r.input.slice(0, 52) + "..." : r.input}"`)}  ${chalk.cyan(r.evalType)}`));
+function snip(s: string): string {
+  return s.length > 55 ? s.slice(0, 52) + "..." : s;
+}
+
+export function printBaselineComparison(c: BaselineComparison): void {
+  if (c.regressions.length > 0) {
+    console.log(chalk.red.bold(`\n${c.regressions.length} regression${c.regressions.length === 1 ? "" : "s"} vs baseline:`));
+    for (const r of c.regressions) {
+      console.log(chalk.red(`  ✗ ${r.testId}  ${chalk.dim(`"${snip(r.input)}"`)}  ${chalk.cyan(r.evalType)}`));
+    }
+  }
+
+  if (c.improvements.length > 0) {
+    console.log(chalk.green.bold(`\n${c.improvements.length} improvement${c.improvements.length === 1 ? "" : "s"} vs baseline:`));
+    for (const r of c.improvements) {
+      console.log(chalk.green(`  ↑ ${r.testId}  ${chalk.dim(`"${snip(r.input)}"`)}  ${chalk.cyan(r.evalType)}`));
+    }
+  }
+
+  if (c.newChecks.length > 0) {
+    console.log(chalk.dim(`\n${c.newChecks.length} new check${c.newChecks.length === 1 ? "" : "s"} (no baseline entry):`));
+    for (const r of c.newChecks) {
+      console.log(chalk.dim(`  + ${r.testId}  "${snip(r.input)}"  ${r.evalType}`));
+    }
+  }
+
+  if (c.removedChecks.length > 0) {
+    console.log(chalk.dim(`\n${c.removedChecks.length} removed check${c.removedChecks.length === 1 ? "" : "s"} (in baseline, not in current run):`));
+    for (const r of c.removedChecks) {
+      console.log(chalk.dim(`  - ${r.testId}  "${snip(r.input)}"  ${r.evalType}`));
+    }
   }
 }
 
 export function printBaselineWritten(path: string): void {
-  console.log(chalk.dim(`  Baseline written → ${path}`));
+  console.log(chalk.green(`  Baseline written → ${path}`));
 }
