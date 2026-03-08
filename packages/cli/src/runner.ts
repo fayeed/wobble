@@ -105,6 +105,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
 
       // passCounts[evalIdx] = number of runs that passed
       const passCounts: number[] = new Array(testCase.expect.length).fill(0);
+      let errorCount = 0;
       let lastEvals: EvalResult[] = [];
       let lastOutput = "";
       const totalUsage: TokenUsage = { inputTokens: 0, outputTokens: 0 };
@@ -154,6 +155,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
       for (const result of trialResults) {
         if ("error" in result) {
           console.log(chalk.red(`  Error on run ${result.runIndex + 1}: ${result.error}`));
+          errorCount++;
           continue;
         }
         if (verbose) {
@@ -169,10 +171,11 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
       }
 
       // Print one row per evaluator
+      // Errors count as failed runs: denominator stays `runs`, pass threshold is against all attempts
       for (let ei = 0; ei < testCase.expect.length; ei++) {
         const e = lastEvals[ei] ?? { type: testCase.expect[ei].type, passed: false };
         const passed = passCounts[ei] >= requiredPasses;
-        printEvalRow({ input: inputLabel, eval: e, passCount: passCounts[ei], totalRuns: runs, passed });
+        printEvalRow({ input: inputLabel, eval: e, passCount: passCounts[ei], totalRuns: runs, errorCount, passed });
 
         if (passed) totalPassed++;
         else totalFailed++;

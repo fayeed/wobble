@@ -10,9 +10,10 @@ export function printEvalRow(opts: {
   eval: EvalResult;
   passCount: number;
   totalRuns: number;
+  errorCount: number;
   passed: boolean;
 }): void {
-  const { input, eval: e, passCount, totalRuns, passed } = opts;
+  const { input, eval: e, passCount, totalRuns, errorCount, passed } = opts;
 
   const icon = passed
     ? chalk.green("✓")
@@ -20,10 +21,11 @@ export function printEvalRow(opts: {
     ? chalk.red("✗")
     : chalk.yellow("~");
 
+  const errorSuffix = errorCount > 0 ? chalk.red(` ${errorCount} err`) : "";
   const runsLabel =
     totalRuns > 1
-      ? chalk.dim(` (${passCount}/${totalRuns})`)
-      : "";
+      ? chalk.dim(` (${passCount}/${totalRuns})`) + errorSuffix
+      : errorSuffix;
 
   const inputSnip =
     input.length > 55 ? input.slice(0, 52) + "..." : input;
