@@ -3,6 +3,7 @@ import { loadConfig } from "./config.js";
 import { runTests } from "./runner.js";
 import { writeBaseline, loadBaseline, findRegressions } from "./baseline.js";
 import { printRegressions, printBaselineWritten } from "./output/terminal.js";
+import { buildJUnit } from "./output/junit.js";
 
 export const runCommand = defineCommand({
   meta: { name: "run", description: "Run prompt regression tests" },
@@ -40,7 +41,7 @@ export const runCommand = defineCommand({
     },
     output: {
       type: "string",
-      description: "Output format: 'terminal' (default) or 'json'",
+      description: "Output format: 'terminal' (default), 'json', or 'junit'",
       default: "terminal",
       alias: "o",
     },
@@ -56,6 +57,7 @@ export const runCommand = defineCommand({
 
     const baselinePath = args.baseline;
     const jsonMode = args.output === "json";
+    const junitMode = args.output === "junit";
     const existingBaseline = args["write-baseline"] ? null : loadBaseline(baselinePath);
 
     try {
@@ -64,7 +66,7 @@ export const runCommand = defineCommand({
         testFilter: args.test,
         tagFilter: args.tag,
         verbose: args.verbose,
-        silent: jsonMode,
+        silent: jsonMode || junitMode,
       });
 
       if (args["write-baseline"]) {
@@ -86,6 +88,17 @@ export const runCommand = defineCommand({
           regressions,
           results: result.results,
         }, null, 2) + "\n");
+        process.exit(result.hasFailures || regressions.length > 0 ? 1 : 0);
+      }
+
+      if (junitMode) {
+        process.stdout.write(buildJUnit({
+          results: result.results,
+          regressions,
+          passed: result.passed,
+          failed: result.failed,
+          totalCost: result.totalCost,
+        }));
         process.exit(result.hasFailures || regressions.length > 0 ? 1 : 0);
       }
 
