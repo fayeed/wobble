@@ -43,7 +43,7 @@ export default function Nav() {
 
       {/* Right */}
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <a href="https://github.com/wobble-cli/wobble" className="nav-link" style={{
+        <a href="https://github.com/fayeed/wobble" className="nav-link" style={{
           fontSize:13, color:"var(--text3)", fontWeight:500,
           display:"flex", alignItems:"center", gap:5, padding:"6px 12px",
         }}>

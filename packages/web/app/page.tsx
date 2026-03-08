@@ -712,7 +712,7 @@ export default function Home() {
                 }}>
                   Get started →
                 </a>
-                <a href="https://github.com/wobble-cli/wobble" className="btn-ghost" style={{
+                <a href="https://github.com/fayeed/wobble" className="btn-ghost" style={{
                   border:"1px solid var(--b2)", color:"var(--text2)",
                   padding:"13px 24px", borderRadius:9,
                   fontSize:14, fontWeight:600, display:"inline-flex", alignItems:"center", gap:7,
@@ -795,7 +795,7 @@ export default function Home() {
             <span style={{ color:"var(--text4)", fontSize:12 }}>v0.1.0 · MIT</span>
           </div>
           <ul style={{ display:"flex", gap:24, listStyle:"none" }}>
-            {[["#features","Platform"],["#evaluators","Evaluators"],["#commands","Commands"],["#roadmap","Roadmap"],["/docs","Docs"],["https://github.com/wobble-cli/wobble","GitHub"]].map(([h,l]) => (
+            {[["#features","Platform"],["#evaluators","Evaluators"],["#commands","Commands"],["#roadmap","Roadmap"],["/docs","Docs"],["https://github.com/fayeed/wobble","GitHub"]].map(([h,l]) => (
               <li key={l}><a href={h} className="footer-link" style={{ color:"var(--text4)", fontSize:13 }}>{l}</a></li>
             ))}
           </ul>
