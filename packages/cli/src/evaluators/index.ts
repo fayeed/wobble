@@ -15,9 +15,9 @@ export async function runEvaluator(
 ): Promise<EvalResult> {
   switch (expectation.type) {
     case "contains":
-      return evalContains(output, expectation.value as string);
+      return evalContains(output, expectation.value as string, expectation.case_sensitive ?? true);
     case "not_contains":
-      return evalNotContains(output, expectation.value as string);
+      return evalNotContains(output, expectation.value as string, expectation.case_sensitive ?? true);
     case "max_length":
       return evalMaxLength(output, expectation.value as number, expectation.unit);
     case "regex":

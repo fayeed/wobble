@@ -19,6 +19,8 @@ export interface Expectation {
     | "custom";
   // contains / not_contains / regex
   value?: string | number;
+  // contains / not_contains
+  case_sensitive?: boolean;
   // max_length
   unit?: "chars" | "words";
   // json_schema
