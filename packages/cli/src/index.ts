@@ -3,6 +3,7 @@ import { defineCommand, runMain } from "citty";
 import { runCommand } from "./cli.js";
 import { initCommand } from "./init.js";
 import { baselineCommand } from "./baseline-cmd.js";
+import { watchCommand } from "./watch.js";
 
 const main = defineCommand({
   meta: {
@@ -13,6 +14,7 @@ const main = defineCommand({
   subCommands: {
     init: initCommand,
     run: runCommand,
+    watch: watchCommand,
     baseline: baselineCommand,
   },
 });
