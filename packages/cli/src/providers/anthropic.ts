@@ -16,7 +16,7 @@ function getClient(): Anthropic {
 export const anthropicProvider: Provider = {
   async run(options: ProviderRunOptions): Promise<ProviderResponse> {
     return withRetry(async () => {
-      const response = await getClient().messages.create({
+      const stream = await getClient().messages.stream({
         model: options.model,
         system: options.system,
         max_tokens: options.maxTokens ?? 1024,
@@ -28,13 +28,25 @@ export const anthropicProvider: Provider = {
           })),
       });
 
-      const content = response.content.find((b) => b.type === "text")?.text ?? "";
+      let content = "";
+      for await (const chunk of stream) {
+        if (
+          chunk.type === "content_block_delta" &&
+          chunk.delta.type === "text_delta"
+        ) {
+          content += chunk.delta.text;
+          process.stderr.write(".");
+        }
+      }
+      process.stderr.write("\n");
+
+      const finalMessage = await stream.finalMessage();
 
       return {
         content,
         usage: {
-          inputTokens: response.usage.input_tokens,
-          outputTokens: response.usage.output_tokens,
+          inputTokens: finalMessage.usage.input_tokens,
+          outputTokens: finalMessage.usage.output_tokens,
         },
       };
     });

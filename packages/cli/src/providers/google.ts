@@ -26,7 +26,7 @@ export const googleProvider: Provider = {
         parts: [{ text: m.content }],
       }));
 
-      const response = await genai.models.generateContent({
+      const stream = await genai.models.generateContentStream({
         model: options.model,
         contents,
         config: {
@@ -35,15 +35,26 @@ export const googleProvider: Provider = {
         },
       });
 
-      const content = response.text ?? "";
-      const usage = response.usageMetadata;
+      let content = "";
+      let inputTokens = 0;
+      let outputTokens = 0;
+
+      for await (const chunk of stream) {
+        const text = chunk.text;
+        if (text) {
+          content += text;
+          process.stderr.write(".");
+        }
+        if (chunk.usageMetadata) {
+          inputTokens = chunk.usageMetadata.promptTokenCount ?? inputTokens;
+          outputTokens = chunk.usageMetadata.candidatesTokenCount ?? outputTokens;
+        }
+      }
+      process.stderr.write("\n");
 
       return {
         content,
-        usage: {
-          inputTokens: usage?.promptTokenCount ?? 0,
-          outputTokens: usage?.candidatesTokenCount ?? 0,
-        },
+        usage: { inputTokens, outputTokens },
       };
     });
   },
