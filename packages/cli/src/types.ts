@@ -12,6 +12,8 @@ export interface Expectation {
   type:
     | "contains"
     | "not_contains"
+    | "starts_with"
+    | "ends_with"
     | "max_length"
     | "regex"
     | "json_schema"

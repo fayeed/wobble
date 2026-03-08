@@ -1,6 +1,8 @@
 import type { Expectation, EvalResult } from "../types.js";
 import { evalContains } from "./contains.js";
 import { evalNotContains } from "./notContains.js";
+import { evalStartsWith } from "./startsWith.js";
+import { evalEndsWith } from "./endsWith.js";
 import { evalMaxLength } from "./maxLength.js";
 import { evalRegex } from "./regex.js";
 import { evalJsonSchema } from "./jsonSchema.js";
@@ -18,6 +20,10 @@ export async function runEvaluator(
       return evalContains(output, expectation.value as string, expectation.case_sensitive ?? true);
     case "not_contains":
       return evalNotContains(output, expectation.value as string, expectation.case_sensitive ?? true);
+    case "starts_with":
+      return evalStartsWith(output, expectation.value as string, expectation.case_sensitive ?? true);
+    case "ends_with":
+      return evalEndsWith(output, expectation.value as string, expectation.case_sensitive ?? true);
     case "max_length":
       return evalMaxLength(output, expectation.value as number, expectation.unit);
     case "regex":
