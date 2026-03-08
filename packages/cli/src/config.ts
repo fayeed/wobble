@@ -10,7 +10,7 @@ const ProviderSchema = z.string().min(1);
 const ExpectationSchema = z.union([
   z.object({ type: z.literal("contains"), value: z.string() }),
   z.object({ type: z.literal("not_contains"), value: z.string() }),
-  z.object({ type: z.literal("max_length"), value: z.number().positive() }),
+  z.object({ type: z.literal("max_length"), value: z.number().positive(), unit: z.enum(["chars", "words"]).optional() }),
   z.object({ type: z.literal("regex"), value: z.string() }),
   z.object({ type: z.literal("json_schema"), schema: z.record(z.unknown()) }),
   z.object({

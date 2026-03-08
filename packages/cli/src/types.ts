@@ -19,6 +19,8 @@ export interface Expectation {
     | "custom";
   // contains / not_contains / regex
   value?: string | number;
+  // max_length
+  unit?: "chars" | "words";
   // json_schema
   schema?: Record<string, unknown>;
   // llm_judge

@@ -18,7 +18,7 @@ export async function runEvaluator(
     case "not_contains":
       return evalNotContains(output, expectation.value as string);
     case "max_length":
-      return evalMaxLength(output, expectation.value as number);
+      return evalMaxLength(output, expectation.value as number, expectation.unit);
     case "regex":
       return evalRegex(output, expectation.value as string);
     case "json_schema":
