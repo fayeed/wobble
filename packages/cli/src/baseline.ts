@@ -120,7 +120,11 @@ export function loadBaseline(filePath: string): BaselineFile | null {
   }
 }
 
-export function compareBaseline(baseline: BaselineFile, current: RunResult[]): BaselineComparison {
+export function compareBaseline(
+  baseline: BaselineFile,
+  current: RunResult[],
+  regressionThreshold = 0.05
+): BaselineComparison {
   const currentEntries = buildEntries(current);
 
   const regressions: Regression[] = [];
@@ -136,13 +140,12 @@ export function compareBaseline(baseline: BaselineFile, current: RunResult[]): B
       continue;
     }
 
-    // Use a 5pp threshold to avoid flagging float noise when runs/config are identical.
     const delta = cur.passRate - base.passRate;
     const [testId, input, evalType] = key.split("::");
 
-    if (delta < -0.05) {
+    if (delta < -regressionThreshold) {
       regressions.push({ testId, input, evalType, baselineRate: base.passRate, currentRate: cur.passRate });
-    } else if (delta > 0.05) {
+    } else if (delta > regressionThreshold) {
       improvements.push({ testId, input, evalType, baselineRate: base.passRate, currentRate: cur.passRate });
     }
   }
@@ -158,6 +161,6 @@ export function compareBaseline(baseline: BaselineFile, current: RunResult[]): B
 }
 
 // Kept for callers that only need the regression list
-export function findRegressions(baseline: BaselineFile, current: RunResult[]): Regression[] {
-  return compareBaseline(baseline, current).regressions;
+export function findRegressions(baseline: BaselineFile, current: RunResult[], regressionThreshold = 0.05): Regression[] {
+  return compareBaseline(baseline, current, regressionThreshold).regressions;
 }

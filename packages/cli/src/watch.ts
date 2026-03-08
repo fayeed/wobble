@@ -94,7 +94,8 @@ export const watchCommand = defineCommand({
 
         const baseline = loadBaseline(args.baseline);
         if (baseline) {
-          const comparison = compareBaseline(baseline, result.results);
+          const regressionThreshold = config.limits?.regression_threshold ?? 0.05;
+          const comparison = compareBaseline(baseline, result.results, regressionThreshold);
           printBaselineComparison(comparison);
         }
       } catch (err) {

@@ -69,6 +69,8 @@ export interface Limits {
   max_cost_per_run?: number;
   max_tokens_per_case?: number;
   timeout_per_run?: number;
+  // Minimum pass-rate drop that counts as a regression (0.0–1.0). Default 0.05 (5pp).
+  regression_threshold?: number;
 }
 
 export interface WobbleConfig {

@@ -78,6 +78,7 @@ const WobbleConfigSchema = z.object({
       max_cost_per_run: z.number().positive().optional(),
       max_tokens_per_case: z.number().positive().int().optional(),
       timeout_per_run: z.number().positive().int().optional(),
+      regression_threshold: z.number().min(0).max(1).optional(),
     })
     .optional(),
   tests: z.array(TestDefinitionSchema).min(1),

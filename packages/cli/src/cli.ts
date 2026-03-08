@@ -76,8 +76,9 @@ export const runCommand = defineCommand({
         process.exit(0);
       }
 
+      const regressionThreshold = config.limits?.regression_threshold ?? 0.05;
       const comparison = existingBaseline
-        ? compareBaseline(existingBaseline, result.results)
+        ? compareBaseline(existingBaseline, result.results, regressionThreshold)
         : null;
       const regressions = comparison?.regressions ?? [];
 
