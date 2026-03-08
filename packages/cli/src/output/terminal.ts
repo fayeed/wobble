@@ -71,18 +71,24 @@ function snip(s: string): string {
   return s.length > 55 ? s.slice(0, 52) + "..." : s;
 }
 
+function pct(rate: number): string {
+  return `${Math.round(rate * 100)}%`;
+}
+
 export function printBaselineComparison(c: BaselineComparison): void {
   if (c.regressions.length > 0) {
     console.log(chalk.red.bold(`\n${c.regressions.length} regression${c.regressions.length === 1 ? "" : "s"} vs baseline:`));
     for (const r of c.regressions) {
-      console.log(chalk.red(`  ✗ ${r.testId}  ${chalk.dim(`"${snip(r.input)}"`)}  ${chalk.cyan(r.evalType)}`));
+      const rate = chalk.dim(`${pct(r.baselineRate)} → ${pct(r.currentRate)}`);
+      console.log(chalk.red(`  ✗ ${r.testId}  ${chalk.dim(`"${snip(r.input)}"`)}  ${chalk.cyan(r.evalType)}  ${rate}`));
     }
   }
 
   if (c.improvements.length > 0) {
     console.log(chalk.green.bold(`\n${c.improvements.length} improvement${c.improvements.length === 1 ? "" : "s"} vs baseline:`));
     for (const r of c.improvements) {
-      console.log(chalk.green(`  ↑ ${r.testId}  ${chalk.dim(`"${snip(r.input)}"`)}  ${chalk.cyan(r.evalType)}`));
+      const rate = chalk.dim(`${pct(r.baselineRate)} → ${pct(r.currentRate)}`);
+      console.log(chalk.green(`  ↑ ${r.testId}  ${chalk.dim(`"${snip(r.input)}"`)}  ${chalk.cyan(r.evalType)}  ${rate}`));
     }
   }
 

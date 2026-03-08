@@ -80,6 +80,9 @@ export interface EvalResult {
   type: string;
   passed: boolean;
   detail?: string;
+  // N-runs pass rate; present on stored CaseResults, absent on per-evaluator intermediate results
+  passCount?: number;
+  totalRuns?: number;
 }
 
 export interface TokenUsage {

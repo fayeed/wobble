@@ -189,7 +189,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
         caseIndex: ci,
         input: inputLabel,
         output: lastOutput,
-        evals: lastEvals.map((e, i) => ({ ...e, passed: passCounts[i] >= requiredPasses })),
+        evals: lastEvals.map((e, i) => ({ ...e, passed: passCounts[i] >= requiredPasses, passCount: passCounts[i], totalRuns: runs })),
         tokenUsage: totalUsage,
       } satisfies CaseResult);
     }
