@@ -5,6 +5,7 @@ import { initCommand } from "./init.js";
 import { baselineCommand } from "./baseline-cmd.js";
 import { watchCommand } from "./watch.js";
 import { compareCommand } from "./compare.js";
+import { historyCommand } from "./history-cmd.js";
 
 const main = defineCommand({
   meta: {
@@ -18,6 +19,7 @@ const main = defineCommand({
     watch: watchCommand,
     compare: compareCommand,
     baseline: baselineCommand,
+    history: historyCommand,
   },
 });
 

@@ -4,6 +4,8 @@ import { runTests } from "./runner.js";
 import { writeBaseline, loadBaseline, compareBaseline } from "./baseline.js";
 import { printBaselineComparison, printBaselineWritten } from "./output/terminal.js";
 import { buildJUnit } from "./output/junit.js";
+import { appendHistory } from "./history.js";
+import path from "path";
 
 export const runCommand = defineCommand({
   meta: { name: "run", description: "Run prompt regression tests" },
@@ -68,6 +70,10 @@ export const runCommand = defineCommand({
         verbose: args.verbose,
         silent: jsonMode || junitMode,
       });
+
+      // Always record to history (unconditional, before baseline comparison)
+      const historyPath = path.join(path.dirname(baselinePath), "history.jsonl");
+      appendHistory(result.results, result.passed, result.failed, result.totalCost, historyPath);
 
       if (args["write-baseline"]) {
         writeBaseline(result.results, baselinePath);
