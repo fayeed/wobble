@@ -31,6 +31,11 @@ export interface Expectation {
   criteria?: string;
   model?: string;
   provider?: ProviderName;
+  // llm_judge rubric mode
+  rubric?: Array<{ dimension: string; weight?: number }>;
+  threshold?: number;           // minimum weighted score (1–10) to pass; default 7
+  // llm_judge few-shot examples
+  examples?: Array<{ input: string; output: string; pass: boolean; reason?: string }>;
   // custom evaluator
   evaluator?: string;
 }
@@ -82,6 +87,10 @@ export interface EvalResult {
   type: string;
   passed: boolean;
   detail?: string;
+  // llm_judge: full reasoning shown in --verbose mode
+  reasoning?: string;
+  // llm_judge rubric: per-dimension scores
+  scores?: Array<{ dimension: string; score: number; weight: number }>;
   // N-runs pass rate; present on stored CaseResults, absent on per-evaluator intermediate results
   passCount?: number;
   totalRuns?: number;

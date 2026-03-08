@@ -35,7 +35,10 @@ export async function runEvaluator(
         output,
         expectation.criteria!,
         expectation.model ?? defaults?.model,
-        expectation.provider ?? defaults?.provider
+        expectation.provider ?? defaults?.provider,
+        expectation.rubric,
+        expectation.threshold,
+        expectation.examples
       );
     case "custom":
       return evalCustom(output, input, expectation.evaluator!);

@@ -161,6 +161,15 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
         }
         if (verbose && !silent) {
           console.log(chalk.dim(`  [run ${result.runIndex + 1}] ${result.output.slice(0, 160)}`));
+          for (const e of result.evals) {
+            if (e.type === "llm_judge" && e.reasoning) {
+              console.log(chalk.dim(`    judge reasoning: ${e.reasoning}`));
+            }
+            if (e.type === "llm_judge" && e.scores) {
+              const scoreStr = e.scores.map((s) => `${s.dimension} ${s.score}/10`).join("  ");
+              console.log(chalk.dim(`    scores: ${scoreStr}`));
+            }
+          }
         }
         lastOutput = result.output;
         lastEvals = result.evals;

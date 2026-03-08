@@ -20,6 +20,17 @@ const ExpectationSchema = z.union([
     criteria: z.string(),
     model: z.string().optional(),
     provider: ProviderSchema.optional(),
+    threshold: z.number().min(1).max(10).optional(),
+    rubric: z.array(z.object({
+      dimension: z.string(),
+      weight: z.number().positive().optional(),
+    })).optional(),
+    examples: z.array(z.object({
+      input: z.string(),
+      output: z.string(),
+      pass: z.boolean(),
+      reason: z.string().optional(),
+    })).optional(),
   }),
   z.object({ type: z.literal("custom"), evaluator: z.string() }),
 ]);
