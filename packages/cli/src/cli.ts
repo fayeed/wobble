@@ -1,6 +1,8 @@
 import { defineCommand } from "citty";
 import { loadConfig } from "./config.js";
 import { runTests } from "./runner.js";
+import { writeBaseline, loadBaseline, findRegressions } from "./baseline.js";
+import { printRegressions, printBaselineWritten } from "./output/terminal.js";
 
 export const runCommand = defineCommand({
   meta: { name: "run", description: "Run prompt regression tests" },
@@ -26,6 +28,16 @@ export const runCommand = defineCommand({
       alias: "v",
       default: false,
     },
+    "write-baseline": {
+      type: "boolean",
+      description: "Save results as the new baseline for regression comparison",
+      default: false,
+    },
+    baseline: {
+      type: "string",
+      description: "Path to baseline file",
+      default: ".wobble-baseline.json",
+    },
   },
   async run({ args }) {
     let config;
@@ -36,6 +48,9 @@ export const runCommand = defineCommand({
       process.exit(1);
     }
 
+    const baselinePath = args.baseline;
+    const existingBaseline = args["write-baseline"] ? null : loadBaseline(baselinePath);
+
     try {
       const result = await runTests({
         config,
@@ -43,6 +58,19 @@ export const runCommand = defineCommand({
         tagFilter: args.tag,
         verbose: args.verbose,
       });
+
+      if (args["write-baseline"]) {
+        writeBaseline(result.results, baselinePath);
+        printBaselineWritten(baselinePath);
+        process.exit(result.hasFailures ? 1 : 0);
+      }
+
+      if (existingBaseline) {
+        const regressions = findRegressions(existingBaseline, result.results);
+        printRegressions(regressions);
+        process.exit(result.hasFailures || regressions.length > 0 ? 1 : 0);
+      }
+
       process.exit(result.hasFailures ? 1 : 0);
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err));

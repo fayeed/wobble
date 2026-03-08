@@ -63,3 +63,15 @@ export function printRunError(testId: string, message: string): void {
   console.log("\n" + chalk.bold(testId));
   console.log(chalk.red(`  Error: ${message}`));
 }
+
+export function printRegressions(regressions: Array<{ testId: string; input: string; evalType: string }>): void {
+  if (regressions.length === 0) return;
+  console.log(chalk.red.bold(`\n${regressions.length} regression${regressions.length === 1 ? "" : "s"} vs baseline:`));
+  for (const r of regressions) {
+    console.log(chalk.red(`  ✗ ${r.testId}  ${chalk.dim(`"${r.input.length > 55 ? r.input.slice(0, 52) + "..." : r.input}"`)}  ${chalk.cyan(r.evalType)}`));
+  }
+}
+
+export function printBaselineWritten(path: string): void {
+  console.log(chalk.dim(`  Baseline written → ${path}`));
+}
