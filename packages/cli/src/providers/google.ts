@@ -26,6 +26,13 @@ export const googleProvider: Provider = {
         parts: [{ text: m.content }],
       }));
 
+      if (contents.length > 0 && contents[contents.length - 1].role !== "user") {
+        throw new Error(
+          "Google provider: the last message in a multi-turn conversation must be a user message. " +
+          "If using an assistant turn at the end for few-shot priming, append a final user turn."
+        );
+      }
+
       const stream = await genai.models.generateContentStream({
         model: options.model,
         contents,
