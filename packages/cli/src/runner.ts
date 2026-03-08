@@ -82,6 +82,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
     const threshold = resolveTestThreshold(test, config);
     const requiredPasses = Math.ceil(threshold * runs);
     const maxTokens = config.limits?.max_tokens_per_case;
+    const timeoutMs = config.limits?.timeout_per_run;
 
     const runResult: RunResult = { testId: test.id, caseResults: [] };
 
@@ -113,7 +114,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
 
       async function runTrial(runIndex: number): Promise<TrialResult> {
         try {
-          const resp = await caseProvider.run({ system, messages, model: caseModel, maxTokens });
+          const resp = await caseProvider.run({ system, messages, model: caseModel, maxTokens, timeoutMs });
           const evals = await Promise.all(
             testCase.expect.map((exp) => runEvaluator(exp, resp.content, inputLabel, { model: caseModel, provider: caseProviderName }))
           );

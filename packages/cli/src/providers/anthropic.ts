@@ -49,6 +49,6 @@ export const anthropicProvider: Provider = {
           outputTokens: finalMessage.usage.output_tokens,
         },
       };
-    });
+    }, 3, options.timeoutMs);
   },
 };

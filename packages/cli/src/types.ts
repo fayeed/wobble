@@ -57,6 +57,7 @@ export interface TestDefinition {
 export interface Limits {
   max_cost_per_run?: number;
   max_tokens_per_case?: number;
+  timeout_per_run?: number;
 }
 
 export interface WobbleConfig {
@@ -105,6 +106,7 @@ export interface ProviderRunOptions {
   messages: Message[];
   model: string;
   maxTokens?: number;
+  timeoutMs?: number;
 }
 
 export interface ProviderResponse {

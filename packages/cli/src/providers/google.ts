@@ -57,6 +57,6 @@ export const googleProvider: Provider = {
           outputTokens: lastUsage?.candidatesTokenCount ?? 0,
         },
       };
-    });
+    }, 3, options.timeoutMs);
   },
 };

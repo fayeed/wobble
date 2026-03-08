@@ -51,6 +51,6 @@ export const openaiProvider: Provider = {
         content,
         usage: { inputTokens, outputTokens },
       };
-    });
+    }, 3, options.timeoutMs);
   },
 };
