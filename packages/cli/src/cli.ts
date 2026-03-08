@@ -38,6 +38,12 @@ export const runCommand = defineCommand({
       description: "Path to baseline file",
       default: ".wobble-baseline.json",
     },
+    output: {
+      type: "string",
+      description: "Output format: 'terminal' (default) or 'json'",
+      default: "terminal",
+      alias: "o",
+    },
   },
   async run({ args }) {
     let config;
@@ -49,6 +55,7 @@ export const runCommand = defineCommand({
     }
 
     const baselinePath = args.baseline;
+    const jsonMode = args.output === "json";
     const existingBaseline = args["write-baseline"] ? null : loadBaseline(baselinePath);
 
     try {
@@ -57,16 +64,32 @@ export const runCommand = defineCommand({
         testFilter: args.test,
         tagFilter: args.tag,
         verbose: args.verbose,
+        silent: jsonMode,
       });
 
       if (args["write-baseline"]) {
         writeBaseline(result.results, baselinePath);
-        printBaselineWritten(baselinePath);
+        if (!jsonMode) printBaselineWritten(baselinePath);
         process.exit(result.hasFailures ? 1 : 0);
       }
 
+      const regressions = existingBaseline
+        ? findRegressions(existingBaseline, result.results)
+        : [];
+
+      if (jsonMode) {
+        process.stdout.write(JSON.stringify({
+          passed: result.passed,
+          failed: result.failed,
+          totalCost: result.totalCost,
+          hasFailures: result.hasFailures,
+          regressions,
+          results: result.results,
+        }, null, 2) + "\n");
+        process.exit(result.hasFailures || regressions.length > 0 ? 1 : 0);
+      }
+
       if (existingBaseline) {
-        const regressions = findRegressions(existingBaseline, result.results);
         printRegressions(regressions);
         process.exit(result.hasFailures || regressions.length > 0 ? 1 : 0);
       }

@@ -24,6 +24,7 @@ export interface RunnerOptions {
   testFilter?: string;
   tagFilter?: string;
   verbose?: boolean;
+  silent?: boolean;
 }
 
 export interface RunnerResult {
@@ -35,7 +36,7 @@ export interface RunnerResult {
 }
 
 export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
-  const { config, testFilter, tagFilter, verbose } = options;
+  const { config, testFilter, tagFilter, verbose, silent } = options;
 
   let tests = config.tests;
   if (testFilter) {
@@ -51,7 +52,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
   if (config.limits?.max_cost_per_run !== undefined) {
     const estimated = estimateTotalCost(tests, config);
     if (estimated > config.limits.max_cost_per_run) {
-      printGuardrailAbort(estimated, config.limits.max_cost_per_run);
+      if (!silent) printGuardrailAbort(estimated, config.limits.max_cost_per_run);
       process.exit(1);
     }
   }
@@ -62,14 +63,14 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
   const allResults: RunResult[] = [];
 
   for (const test of tests) {
-    printTestHeader(test.id);
+    if (!silent) printTestHeader(test.id);
 
     let promptContent: string;
     try {
       promptContent = loadPrompt(test.prompt_file);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      printRunError(test.id, msg);
+      if (!silent) printRunError(test.id, msg);
       allResults.push({ testId: test.id, caseResults: [], error: msg });
       totalFailed++;
       continue;
@@ -154,11 +155,11 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
 
       for (const result of trialResults) {
         if ("error" in result) {
-          console.log(chalk.red(`  Error on run ${result.runIndex + 1}: ${result.error}`));
+          if (!silent) console.log(chalk.red(`  Error on run ${result.runIndex + 1}: ${result.error}`));
           errorCount++;
           continue;
         }
-        if (verbose) {
+        if (verbose && !silent) {
           console.log(chalk.dim(`  [run ${result.runIndex + 1}] ${result.output.slice(0, 160)}`));
         }
         lastOutput = result.output;
@@ -175,7 +176,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
       for (let ei = 0; ei < testCase.expect.length; ei++) {
         const e = lastEvals[ei] ?? { type: testCase.expect[ei].type, passed: false };
         const passed = passCounts[ei] >= requiredPasses;
-        printEvalRow({ input: inputLabel, eval: e, passCount: passCounts[ei], totalRuns: runs, errorCount, passed });
+        if (!silent) printEvalRow({ input: inputLabel, eval: e, passCount: passCounts[ei], totalRuns: runs, errorCount, passed });
 
         if (passed) totalPassed++;
         else totalFailed++;
@@ -196,7 +197,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
     allResults.push(runResult);
   }
 
-  printSummary({ passed: totalPassed, failed: totalFailed, totalCost });
+  if (!silent) printSummary({ passed: totalPassed, failed: totalFailed, totalCost });
 
   return {
     passed: totalPassed,
