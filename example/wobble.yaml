@@ -1,0 +1,142 @@
+version: 1
+
+# Global defaults — override per-test as needed
+model: gpt-4o-mini
+provider: openai
+runs: 3          # run each case 3 times to catch flakiness
+threshold: 0.8   # 80% of runs must pass
+
+limits:
+  max_cost_per_run: 0.50
+  max_tokens_per_case: 256
+
+tests:
+  # ── 1. Summarisation ────────────────────────────────────────────────────────
+  # Tests that the model produces short, accurate summaries.
+  - id: summarise
+    prompt_file: prompts/summarise.txt
+    tags: [smoke]
+
+    cases:
+      - input: >
+          Scientists at CERN have detected a new subatomic particle that may help
+          explain dark matter. The particle, provisionally named X17, was observed
+          in collision experiments and does not fit any known standard model category.
+          Further experiments are planned for 2026.
+        expect:
+          - type: max_length
+            value: 60
+            unit: words
+          - type: contains
+            value: CERN
+          - type: not_contains
+            value: I
+            case_sensitive: true   # no first-person
+
+      - input: >
+          The city council voted 7-2 to approve a new cycling infrastructure plan,
+          allocating $4.2 million to build protected bike lanes across 12 downtown
+          streets. Construction is expected to begin in spring 2026.
+        expect:
+          - type: max_length
+            value: 60
+            unit: words
+          - type: contains
+            value: "4.2 million"
+          - type: llm_judge
+            criteria: "Does the summary accurately reflect the key facts without adding information?"
+
+  # ── 2. JSON extraction ──────────────────────────────────────────────────────
+  # Tests that the model returns valid, schema-conformant JSON.
+  - id: json-extractor
+    prompt_file: prompts/json-extractor.txt
+    runs: 1        # deterministic task — single run is enough
+    threshold: 1.0
+    tags: [smoke]
+
+    cases:
+      - input: "Book a table for 4 at The Anchor on Friday at 7pm"
+        expect:
+          - type: json_schema
+            schema:
+              type: object
+              required: [party_size, restaurant, date, time]
+              properties:
+                party_size: { type: number }
+                restaurant: { type: string }
+                date: { type: string }
+                time: { type: string }
+          - type: not_contains
+            value: "```"   # no markdown fences
+
+      - input: "Send 250 units of SKU-9981 to warehouse B by next Tuesday"
+        expect:
+          - type: json_schema
+            schema:
+              type: object
+              required: [quantity, sku, destination]
+              properties:
+                quantity: { type: number }
+                sku: { type: string }
+                destination: { type: string }
+
+  # ── 3. Customer support agent (variable interpolation) ──────────────────────
+  # Demonstrates {{variable}} placeholders — the prompt and input both use them.
+  - id: support-agent
+    prompt_file: prompts/support-agent.txt
+    tags: [llm-judge]
+    runs: 3
+    threshold: 0.8
+
+    cases:
+      - input: "I ordered {{product}} two weeks ago and it still hasn't arrived."
+        variables:
+          company: Acme Store
+          product: a standing desk
+        expect:
+          - type: max_length
+            value: 100
+            unit: words
+          - type: llm_judge
+            criteria: "Does the reply acknowledge the delay empathetically and offer a concrete next step?"
+            rubric:
+              - dimension: empathy
+                weight: 2
+              - dimension: actionability
+                weight: 3
+            threshold: 6
+
+      - input: "Your website says {{product}} is in stock but I can't add it to my cart."
+        variables:
+          company: Acme Store
+          product: the Pro Keyboard
+        expect:
+          - type: max_length
+            value: 100
+            unit: words
+          - type: llm_judge
+            criteria: "Is the reply helpful, polite, and does it suggest a resolution path?"
+
+  # ── 4. Multi-turn conversation ───────────────────────────────────────────────
+  # Demonstrates multi-turn tests using the turns: key.
+  - id: multi-turn-support
+    prompt_file: prompts/support-agent.txt
+    runs: 1
+    threshold: 1.0
+    tags: [multi-turn]
+
+    cases:
+      - turns:
+          - role: user
+            content: "Hi, I need help with my recent order."
+          - role: assistant
+            content: "Of course! Could you share your order number so I can look into it?"
+          - role: user
+            content: "It's order #88421. It arrived damaged."
+        variables:
+          company: Acme Store
+        expect:
+          - type: contains
+            value: "88421"
+          - type: llm_judge
+            criteria: "Does the reply acknowledge the damage and offer a clear resolution such as a replacement or refund?"
