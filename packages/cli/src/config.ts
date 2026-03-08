@@ -45,6 +45,7 @@ const TestDefinitionSchema = z.object({
   model: z.string().optional(),
   provider: ProviderSchema.optional(),
   runs: z.number().positive().int().optional(),
+  concurrency: z.number().positive().int().optional(),
   threshold: z.number().min(0).max(1).optional(),
   tags: z.array(z.string()).optional(),
   cases: z.array(TestCaseSchema).min(1),
@@ -55,6 +56,7 @@ const WobbleConfigSchema = z.object({
   model: z.string().optional(),
   provider: ProviderSchema.optional(),
   runs: z.number().positive().int().optional(),
+  concurrency: z.number().positive().int().optional(),
   threshold: z.number().min(0).max(1).optional(),
   env: z.record(z.string()).optional(),
   limits: z
@@ -149,4 +151,11 @@ export function resolveTestThreshold(
   config: WobbleConfig
 ): number {
   return test.threshold ?? config.threshold ?? 1.0;
+}
+
+export function resolveTestConcurrency(
+  test: WobbleConfig["tests"][number],
+  config: WobbleConfig
+): number {
+  return test.concurrency ?? config.concurrency ?? 5;
 }

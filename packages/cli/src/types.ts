@@ -48,6 +48,7 @@ export interface TestDefinition {
   model?: string;
   provider?: ProviderName;
   runs?: number;
+  concurrency?: number;
   threshold?: number;
   tags?: string[];
   cases: TestCase[];
@@ -63,6 +64,7 @@ export interface WobbleConfig {
   model?: string;
   provider?: ProviderName;
   runs?: number;
+  concurrency?: number;
   threshold?: number;
   env?: Record<string, string>;
   limits?: Limits;

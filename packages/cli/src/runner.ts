@@ -7,7 +7,7 @@ import type {
   EvalResult,
   TokenUsage,
 } from "./types.js";
-import { loadPrompt, resolveTestModel, resolveTestProvider, resolveTestRuns, resolveTestThreshold } from "./config.js";
+import { loadPrompt, resolveTestModel, resolveTestProvider, resolveTestRuns, resolveTestThreshold, resolveTestConcurrency } from "./config.js";
 import { getProvider, buildMessages } from "./providers/index.js";
 import { runEvaluator } from "./evaluators/index.js";
 import { estimateCostForTokens, estimateTokens, estimateRunCost } from "./cost.js";
@@ -78,6 +78,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
     const model = resolveTestModel(test, config);
     const providerName = resolveTestProvider(test, config);
     const runs = resolveTestRuns(test, config);
+    const concurrency = resolveTestConcurrency(test, config);
     const threshold = resolveTestThreshold(test, config);
     const requiredPasses = Math.ceil(threshold * runs);
     const maxTokens = config.limits?.max_tokens_per_case;
@@ -107,38 +108,62 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
       let lastOutput = "";
       const totalUsage: TokenUsage = { inputTokens: 0, outputTokens: 0 };
 
-      for (let run = 0; run < runs; run++) {
-        let output: string;
+      // Run trials concurrently up to `concurrency` at a time
+      type TrialResult = { runIndex: number; output: string; evals: EvalResult[]; usage: TokenUsage } | { runIndex: number; error: string };
+
+      async function runTrial(runIndex: number): Promise<TrialResult> {
         try {
-          const resp = await caseProvider.run({
-            system,
-            messages,
-            model: caseModel,
-            maxTokens,
-          });
-          output = resp.content;
-          totalUsage.inputTokens += resp.usage.inputTokens;
-          totalUsage.outputTokens += resp.usage.outputTokens;
+          const resp = await caseProvider.run({ system, messages, model: caseModel, maxTokens });
+          const evals = await Promise.all(
+            testCase.expect.map((exp) => runEvaluator(exp, resp.content, inputLabel, { model: caseModel, provider: caseProviderName }))
+          );
+          return { runIndex, output: resp.content, evals, usage: resp.usage };
         } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.log(chalk.red(`  Error on run ${run + 1}: ${msg}`));
+          return { runIndex, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
+
+      const trialResults: TrialResult[] = [];
+      const queue = Array.from({ length: runs }, (_, i) => i);
+      const inFlight = new Set<Promise<void>>();
+
+      async function startNext(): Promise<void> {
+        const runIndex = queue.shift();
+        if (runIndex === undefined) return;
+        const p: Promise<void> = runTrial(runIndex).then((result) => {
+          trialResults.push(result);
+          inFlight.delete(p);
+        });
+        inFlight.add(p);
+      }
+
+      // Seed up to `concurrency` tasks
+      for (let i = 0; i < Math.min(concurrency, runs); i++) {
+        await startNext();
+      }
+      // Drain: as each finishes, start the next queued one
+      while (inFlight.size > 0) {
+        await Promise.race(inFlight);
+        await startNext();
+      }
+
+      // Aggregate in run-index order for stable lastEvals / lastOutput
+      trialResults.sort((a, b) => a.runIndex - b.runIndex);
+
+      for (const result of trialResults) {
+        if ("error" in result) {
+          console.log(chalk.red(`  Error on run ${result.runIndex + 1}: ${result.error}`));
           continue;
         }
-
-        lastOutput = output;
-
         if (verbose) {
-          console.log(chalk.dim(`  [run ${run + 1}] ${output.slice(0, 160)}`));
+          console.log(chalk.dim(`  [run ${result.runIndex + 1}] ${result.output.slice(0, 160)}`));
         }
-
-        const evals = await Promise.all(
-          testCase.expect.map((exp) => runEvaluator(exp, output, inputLabel, { model: caseModel, provider: caseProviderName }))
-        );
-
-        if (run === runs - 1) lastEvals = evals;
-
-        for (let ei = 0; ei < evals.length; ei++) {
-          if (evals[ei].passed) passCounts[ei]++;
+        lastOutput = result.output;
+        lastEvals = result.evals;
+        totalUsage.inputTokens += result.usage.inputTokens;
+        totalUsage.outputTokens += result.usage.outputTokens;
+        for (let ei = 0; ei < result.evals.length; ei++) {
+          if (result.evals[ei].passed) passCounts[ei]++;
         }
       }
 
