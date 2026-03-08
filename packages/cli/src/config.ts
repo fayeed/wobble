@@ -45,6 +45,7 @@ const TestDefinitionSchema = z.object({
   model: z.string().optional(),
   provider: ProviderSchema.optional(),
   runs: z.number().positive().int().optional(),
+  threshold: z.number().min(0).max(1).optional(),
   tags: z.array(z.string()).optional(),
   cases: z.array(TestCaseSchema).min(1),
 });
@@ -54,6 +55,7 @@ const WobbleConfigSchema = z.object({
   model: z.string().optional(),
   provider: ProviderSchema.optional(),
   runs: z.number().positive().int().optional(),
+  threshold: z.number().min(0).max(1).optional(),
   env: z.record(z.string()).optional(),
   limits: z
     .object({
@@ -140,4 +142,11 @@ export function resolveTestRuns(
   config: WobbleConfig
 ): number {
   return test.runs ?? config.runs ?? 10;
+}
+
+export function resolveTestThreshold(
+  test: WobbleConfig["tests"][number],
+  config: WobbleConfig
+): number {
+  return test.threshold ?? config.threshold ?? 1.0;
 }

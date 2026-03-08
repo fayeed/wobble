@@ -7,7 +7,7 @@ import type {
   EvalResult,
   TokenUsage,
 } from "./types.js";
-import { loadPrompt, resolveTestModel, resolveTestProvider, resolveTestRuns } from "./config.js";
+import { loadPrompt, resolveTestModel, resolveTestProvider, resolveTestRuns, resolveTestThreshold } from "./config.js";
 import { getProvider, buildMessages } from "./providers/index.js";
 import { runEvaluator } from "./evaluators/index.js";
 import { estimateCostForTokens, estimateTokens, estimateRunCost } from "./cost.js";
@@ -78,6 +78,8 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
     const model = resolveTestModel(test, config);
     const providerName = resolveTestProvider(test, config);
     const runs = resolveTestRuns(test, config);
+    const threshold = resolveTestThreshold(test, config);
+    const requiredPasses = Math.ceil(threshold * runs);
     const maxTokens = config.limits?.max_tokens_per_case;
 
     const runResult: RunResult = { testId: test.id, caseResults: [] };
@@ -143,9 +145,10 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
       // Print one row per evaluator
       for (let ei = 0; ei < testCase.expect.length; ei++) {
         const e = lastEvals[ei] ?? { type: testCase.expect[ei].type, passed: false };
-        printEvalRow({ input: inputLabel, eval: e, passCount: passCounts[ei], totalRuns: runs });
+        const passed = passCounts[ei] >= requiredPasses;
+        printEvalRow({ input: inputLabel, eval: e, passCount: passCounts[ei], totalRuns: runs, passed });
 
-        if (passCounts[ei] === runs) totalPassed++;
+        if (passed) totalPassed++;
         else totalFailed++;
       }
 
@@ -156,7 +159,7 @@ export async function runTests(options: RunnerOptions): Promise<RunnerResult> {
         caseIndex: ci,
         input: inputLabel,
         output: lastOutput,
-        evals: lastEvals.map((e, i) => ({ ...e, passed: passCounts[i] === runs })),
+        evals: lastEvals.map((e, i) => ({ ...e, passed: passCounts[i] >= requiredPasses })),
         tokenUsage: totalUsage,
       } satisfies CaseResult);
     }
