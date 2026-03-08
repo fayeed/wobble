@@ -36,8 +36,7 @@ export const googleProvider: Provider = {
       });
 
       let content = "";
-      let inputTokens = 0;
-      let outputTokens = 0;
+      let lastUsage: { promptTokenCount?: number; candidatesTokenCount?: number } | undefined;
 
       for await (const chunk of stream) {
         const text = chunk.text;
@@ -46,15 +45,17 @@ export const googleProvider: Provider = {
           process.stderr.write(".");
         }
         if (chunk.usageMetadata) {
-          inputTokens = chunk.usageMetadata.promptTokenCount ?? inputTokens;
-          outputTokens = chunk.usageMetadata.candidatesTokenCount ?? outputTokens;
+          lastUsage = chunk.usageMetadata;
         }
       }
       process.stderr.write("\n");
 
       return {
         content,
-        usage: { inputTokens, outputTokens },
+        usage: {
+          inputTokens: lastUsage?.promptTokenCount ?? 0,
+          outputTokens: lastUsage?.candidatesTokenCount ?? 0,
+        },
       };
     });
   },
