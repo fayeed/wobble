@@ -21,20 +21,14 @@ export const googleProvider: Provider = {
     return withRetry(async () => {
       const genai = getClient();
 
-      // Build conversation history — Google uses "user" / "model" roles
-      const history = options.messages.slice(0, -1).map((m) => ({
+      const contents = options.messages.map((m) => ({
         role: m.role === "assistant" ? "model" : "user",
         parts: [{ text: m.content }],
       }));
 
-      const lastMessage = options.messages[options.messages.length - 1];
-
       const response = await genai.models.generateContent({
         model: options.model,
-        contents: [
-          ...history,
-          { role: "user", parts: [{ text: lastMessage?.content ?? "" }] },
-        ],
+        contents,
         config: {
           systemInstruction: options.system,
           maxOutputTokens: options.maxTokens,
